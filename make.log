@@ -1,0 +1,109 @@
+In file included from UserModule.h:35:0,
+                 from UserGui.h:31,
+                 from UserGui.cpp:27:
+UsineDefinitions.h:104:1: warning: 'typedef' was ignored in this declaration [enabled by default]
+UsineDefinitions.h:114:1: warning: 'typedef' was ignored in this declaration [enabled by default]
+UsineDefinitions.h:138:1: warning: 'typedef' was ignored in this declaration [enabled by default]
+UsineDefinitions.h:155:1: warning: 'typedef' was ignored in this declaration [enabled by default]
+In file included from UserModule.h:35:0,
+                 from UserGui.h:31,
+                 from UserGui.cpp:27:
+UsineDefinitions.h:593:1: warning: 'typedef' was ignored in this declaration [enabled by default]
+UsineDefinitions.h:706:39: warning: type qualifiers ignored on function return type [-Wignored-qualifiers]
+UserGui.cpp:56:1: warning: unused parameter 'DC' [-Wunused-parameter]
+UserGui.cpp:94:5: warning: unused parameter 'm_userModule' [-Wunused-parameter]
+In file included from UserUtils.h:31:0,
+                 from UserUtils.cpp:30:
+UsineDefinitions.h:104:1: warning: 'typedef' was ignored in this declaration [enabled by default]
+UsineDefinitions.h:114:1: warning: 'typedef' was ignored in this declaration [enabled by default]
+UsineDefinitions.h:138:1: warning: 'typedef' was ignored in this declaration [enabled by default]
+UsineDefinitions.h:155:1: warning: 'typedef' was ignored in this declaration [enabled by default]
+In file included from UserUtils.h:31:0,
+                 from UserUtils.cpp:30:
+UsineDefinitions.h:593:1: warning: 'typedef' was ignored in this declaration [enabled by default]
+UsineDefinitions.h:706:39: warning: type qualifiers ignored on function return type [-Wignored-qualifiers]
+UserUtils.cpp:287:13: warning: unused parameter 'Width' [-Wunused-parameter]
+In file included from UserDefinitions.h:31:0,
+                 from WaxDecoder.h:29,
+                 from WaxDecoder.cpp:24:
+UsineDefinitions.h:104:1: warning: 'typedef' was ignored in this declaration [enabled by default]
+UsineDefinitions.h:114:1: warning: 'typedef' was ignored in this declaration [enabled by default]
+UsineDefinitions.h:138:1: warning: 'typedef' was ignored in this declaration [enabled by default]
+UsineDefinitions.h:155:1: warning: 'typedef' was ignored in this declaration [enabled by default]
+In file included from UserDefinitions.h:31:0,
+                 from WaxDecoder.h:29,
+                 from WaxDecoder.cpp:24:
+UsineDefinitions.h:593:1: warning: 'typedef' was ignored in this declaration [enabled by default]
+UsineDefinitions.h:706:39: warning: type qualifiers ignored on function return type [-Wignored-qualifiers]
+In file included from WaxDecoder.cpp:24:0:
+WaxDecoder.h:47:1: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+WaxDecoder.h:47:1: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+WaxDecoder.h:47:1: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+WaxDecoder.h:47:1: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+WaxDecoder.h:47:1: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+WaxDecoder.h:47:1: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+WaxDecoder.h:47:1: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+WaxDecoder.h: In member function 'int TWaxDecoder::m_exportPlaybackParameters()':
+WaxDecoder.h:196:68: warning: comparison between signed and unsigned integer expressions [-Wsign-compare]
+WaxDecoder.cpp: At global scope:
+WaxDecoder.cpp:32:29: warning: type qualifiers ignored on function return type [-Wignored-qualifiers]
+WaxDecoder.cpp: In function 'void GetModuleInfo(void*, TMasterInfo*, TModuleInfo*)':
+WaxDecoder.cpp:63:25: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+WaxDecoder.cpp:64:30: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+WaxDecoder.cpp: At global scope:
+WaxDecoder.cpp:61:6: warning: unused parameter 'pModule' [-Wunused-parameter]
+WaxDecoder.cpp:61:6: warning: unused parameter 'pMasterInfo' [-Wunused-parameter]
+WaxDecoder.cpp: In function 'void GetParamInfo(void*, int, TParamInfo*)':
+WaxDecoder.cpp:104:27: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+WaxDecoder.cpp:113:27: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+WaxDecoder.cpp:122:27: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+WaxDecoder.cpp:123:32: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+WaxDecoder.cpp:134:27: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+WaxDecoder.cpp:135:32: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+WaxDecoder.cpp:146:27: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+WaxDecoder.cpp:152:26: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+WaxDecoder.cpp:153:26: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+WaxDecoder.cpp:160:27: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+WaxDecoder.cpp:166:26: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+WaxDecoder.cpp:167:26: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+WaxDecoder.cpp: At global scope:
+WaxDecoder.cpp:97:6: warning: unused parameter 'pModule' [-Wunused-parameter]
+WaxDecoder.cpp:252:6: warning: unused parameter 'pModule' [-Wunused-parameter]
+WaxDecoder.cpp:253:6: warning: unused parameter 'pModule' [-Wunused-parameter]
+WaxDecoder.cpp:254:6: warning: unused parameter 'pModule' [-Wunused-parameter]
+WaxDecoder.cpp:254:6: warning: unused parameter 'W' [-Wunused-parameter]
+WaxDecoder.cpp:254:6: warning: unused parameter 'H' [-Wunused-parameter]
+WaxDecoder.cpp:255:6: warning: unused parameter 'pModule' [-Wunused-parameter]
+WaxDecoder.cpp:255:6: warning: unused parameter 'DC' [-Wunused-parameter]
+WaxDecoder.cpp:255:6: warning: unused parameter 'ParentColor' [-Wunused-parameter]
+WaxDecoder.cpp:263:5: warning: unused parameter 'pModule' [-Wunused-parameter]
+WaxDecoder.cpp:270:6: warning: unused parameter 'pModule' [-Wunused-parameter]
+WaxDecoder.cpp:270:6: warning: unused parameter 'chunk' [-Wunused-parameter]
+WaxDecoder.cpp:274:6: warning: unused parameter 'pModule' [-Wunused-parameter]
+WaxDecoder.cpp:274:6: warning: unused parameter 'chunk' [-Wunused-parameter]
+lut.cpp: In function 'int lut_init(lut*, int)':
+lut.cpp:47:58: warning: unknown conversion type character 'z' in format [-Wformat]
+lut.cpp:47:58: warning: too many arguments for format [-Wformat-extra-args]
+timecoder.cpp:139:1: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+timecoder.cpp:139:1: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+timecoder.cpp:139:1: warning: missing initializer for member 'timecode_def::lut' [-Wmissing-field-initializers]
+timecoder.cpp:139:1: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+timecoder.cpp:139:1: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+timecoder.cpp:139:1: warning: missing initializer for member 'timecode_def::lut' [-Wmissing-field-initializers]
+timecoder.cpp:139:1: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+timecoder.cpp:139:1: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+timecoder.cpp:139:1: warning: missing initializer for member 'timecode_def::lut' [-Wmissing-field-initializers]
+timecoder.cpp:139:1: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+timecoder.cpp:139:1: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+timecoder.cpp:139:1: warning: missing initializer for member 'timecode_def::lut' [-Wmissing-field-initializers]
+timecoder.cpp:139:1: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+timecoder.cpp:139:1: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+timecoder.cpp:139:1: warning: missing initializer for member 'timecode_def::lut' [-Wmissing-field-initializers]
+timecoder.cpp:139:1: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+timecoder.cpp:139:1: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+timecoder.cpp:139:1: warning: missing initializer for member 'timecode_def::lut' [-Wmissing-field-initializers]
+timecoder.cpp:139:1: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+timecoder.cpp:139:1: warning: deprecated conversion from string constant to 'char*' [-Wwrite-strings]
+timecoder.cpp:139:1: warning: missing initializer for member 'timecode_def::lut' [-Wmissing-field-initializers]
+timecoder.cpp: In function 'int build_lookup(timecode_def*)':
+timecoder.cpp:199:21: warning: variable 'last' set but not used [-Wunused-but-set-variable]
