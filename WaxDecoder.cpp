@@ -1,20 +1,44 @@
 //-----------------------------------------------------------------------------
-//
 //@file  
 //	WaxDecoder.cpp
 //
-//@date 
-//	2012/07/xx
-//
 //@author
-//  naarud
+//	Arnaud BEUROTTE aka 'naarud'
 //
 //@brief 
-//	Implementation of the TWaxDecoder class.
+//	Implementation of the WaxDecoder class.
 //
 //@historic 
 //	2012/07/04
 //    first release, implement the timecoder used in v1.2 of xwax
+//  2018/11/16
+//    updated to Usine SDK HH3-7.01.006
+//    based on xwax v1.7 sources
+//
+//@IMPORTANT
+// All dependencies are under there own licence.
+//
+//@LICENCE
+//
+// Copyright (c) 2012, 2018 Arnaud BEUROTTE
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files(the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions :
+//
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
 //
 //-----------------------------------------------------------------------------
 
@@ -23,125 +47,120 @@
 //-----------------------------------------------------------------------------
 #include "WaxDecoder.h"
 
-//----------------------------------------------------------------------------
-// create, general info and destroy methodes
-//----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+// create, general info and destroy methods
+//-----------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------
-// Get the SDK version
-const int GetSDKVersion(void) 
+void CreateModule (void* &pModule, AnsiCharPtr optionalString, LongBool Flag, MasterInfo* pMasterInfo, AnsiCharPtr optionalContent)
 {
-	return SDK_VERSION;
+	pModule = new WaxDecoder();
 }
 
 //-----------------------------------------------------------------------------
-// Get the module implementation
-TImplementation GetImplementation() 
+void DestroyModule(void* pModule) 
 {
-  return CPP_GCC_432;
+	delete ((WaxDecoder*)pModule);
 }
 
 //-----------------------------------------------------------------------------
-// Create
-void Create(void* &pModule) 
+// module constants for browser info and module info
+const AnsiCharPtr UserModuleBase::MODULE_NAME = "WaxDecoder";
+const AnsiCharPtr UserModuleBase::MODULE_DESC = "Timecoded Vinyl/CD interpreter";
+const AnsiCharPtr UserModuleBase::MODULE_VERSION = "20181116";
+
+//-----------------------------------------------------------------------------
+void GetBrowserInfo(ModuleInfo* pModuleInfo) 
 {
-	pModule = new TWaxDecoder();
+	pModuleInfo->Name				= UserModuleBase::MODULE_NAME;
+	pModuleInfo->Description		= UserModuleBase::MODULE_DESC;
+	pModuleInfo->Version			= UserModuleBase::MODULE_VERSION;
+}
+
+
+//-----------------------------------------------------------------------------
+// module constructors/destructors and description
+//-----------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+WaxDecoder::WaxDecoder()
+{
+	usineBlockSize = 0;
+	usineSmplRate = 0;
+	target_position = TARGET_UNKNOWN;
+	pitch = 0.;
+    lbxTimecodes = 0;
+    lbxRpmSpeed = 0;
+    lbxSoftPA = 0;
+};
+
+//-----------------------------------------------------------------------------
+WaxDecoder::~WaxDecoder()
+{
+	if (pcm != NULL)
+		delete [] pcm;
 }
 
 //-----------------------------------------------------------------------------
-// destroy
-void Destroy(void* pModule) 
+void WaxDecoder::onGetModuleInfo (MasterInfo* pMasterInfo, ModuleInfo* pModuleInfo)
 {
-	// cast is important to call the good destructor
-	delete ((TWaxDecoder*)pModule);
-}
-
-//-----------------------------------------------------------------------------
-// module description
-void GetModuleInfo (void* pModule, TMasterInfo* pMasterInfo, TModuleInfo* pModuleInfo) 
-{
-	pModuleInfo->Name				= "WaxDecoder";
-	pModuleInfo->Description		= "Wax Decoder";
+	pModuleInfo->Name				= MODULE_NAME;
+	pModuleInfo->Description		= MODULE_DESC;
 	pModuleInfo->ModuleType         = mtSimple;
-	pModuleInfo->ModuleColor        = ColorUSINE(128, 128, 128);
-	pModuleInfo->NumberOfParams     = 6;
-	pModuleInfo->DontProcess		= false;
+	pModuleInfo->BackColor          = sdkGetUsineColor(clAudioModuleColor);
+	pModuleInfo->Version			= MODULE_VERSION;
+	pModuleInfo->NumberOfParams     = 4;
 }
 
+
 //-----------------------------------------------------------------------------
-// query system and init methodes
+// query system and init methods
 //-----------------------------------------------------------------------------
 
 // query system not used
 
 //-----------------------------------------------------------------------------
-// initialisation
-void InitModule (void* pModule, TMasterInfo* pMasterInfo, TModuleInfo* pModuleInfo) 
-{
-	// make convenient pointer to the module
-	TWaxDecoder* pWaxDecoder = ((TWaxDecoder*)pModule);
-	
-	// remember, it's up to us to initialize the UserModule
-	pWaxDecoder->Init(pMasterInfo, pModuleInfo);
-	
-	// init timecoder to 'serato_2a' timecode at 33 rpm
-	pWaxDecoder->LoadTimecoder(TC_NAMES[0], RPM_SPEED[0]);
+void WaxDecoder::onInitModule (MasterInfo* pMasterInfo, ModuleInfo* pModuleInfo) {
+    
+	// init timecoder to 'serato_2a' timecode at 33 rpm without using a 'software' preamp
+	loadTimecoder(TC_NAMES[0], RPM_SPEED[0], SOFT_PREAMP[0]);
+
+	// usine block size
+	usineBlockSize = sdkGetBlocSize();
+	pcm = new signed short[usineBlockSize * 2];
 }
+
 
 //----------------------------------------------------------------------------
 // parameters and process
 //----------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------
-// Parameters description
-void GetParamInfo (void* pModule,int n, TParamInfo* pParamInfo) 
+// parameters description
+void WaxDecoder::onGetParamInfo (int ParamIndex, TParamInfo* pParamInfo)
 {	
-	switch (n) 
+	switch (ParamIndex) 
     {
-    // Audio in
+    // audio in left
 	case 0:
 		pParamInfo->ParamType		= ptAudio;
 		pParamInfo->Caption			= "in L";
 		pParamInfo->IsInput			= true;
 		pParamInfo->IsOutput		= false;
 		pParamInfo->ReadOnly		= false;
+		pParamInfo->EventPtr        = &audioInputTab[0];
 		break;
-
-    // Audio in
+    // audio in right
 	case 1:
 		pParamInfo->ParamType		= ptAudio;
 		pParamInfo->Caption			= "in R";
 		pParamInfo->IsInput			= true;
 		pParamInfo->IsOutput		= false;
 		pParamInfo->ReadOnly		= false;
+		pParamInfo->EventPtr        = &audioInputTab[1];
 		break;
-
-	// timecode name input
-	case 2:
-		pParamInfo->ParamType		= ptListBox;
-		pParamInfo->Caption			= "timecode";
-		pParamInfo->ListBoxStrings	= "\"serato_2a\",\"serato_2b\",\"serato_cd\",\"traktor_a\",\"traktor_b\",\"mixvibes_v2\",\"mixvibes_7inch\"";
-		pParamInfo->IsInput			= true;
-		pParamInfo->IsOutput		= false;
-		pParamInfo->DefaultValue	= 0;
-		pParamInfo->ReadOnly		= false;
-		pParamInfo->CallBackType	= ctNormal;
-		break;
-
-	// rotational speed input
-	case 3:
-		pParamInfo->ParamType		= ptListBox;
-		pParamInfo->Caption			= "rpm";
-		pParamInfo->ListBoxStrings	= "\"33\",\"45\"";
-		pParamInfo->IsInput			= true;
-		pParamInfo->IsOutput		= false;
-		pParamInfo->DefaultValue	= 0;
-		pParamInfo->ReadOnly		= false;
-		pParamInfo->CallBackType	= ctNormal;
-		break;
-
 	// position output
-	case 4:
+	case 2:
 		pParamInfo->ParamType		= ptDataField;
 		pParamInfo->Caption			= "position";
 		pParamInfo->IsInput			= false;
@@ -152,10 +171,10 @@ void GetParamInfo (void* pModule,int n, TParamInfo* pParamInfo)
 		pParamInfo->Symbol			= "s";
 		pParamInfo->Format			= "%g";
 		pParamInfo->ReadOnly		= true;
+		pParamInfo->EventPtr        = &dtfPositionOut;
 		break;
-
 	// pitch output
-	case 5:
+	case 3:
 		pParamInfo->ParamType		= ptDataField;
 		pParamInfo->Caption			= "pitch";
 		pParamInfo->IsInput			= false;
@@ -166,110 +185,148 @@ void GetParamInfo (void* pModule,int n, TParamInfo* pParamInfo)
 		pParamInfo->Symbol			= "";
 		pParamInfo->Format			= "%g";
 		pParamInfo->ReadOnly		= true;
+		pParamInfo->EventPtr        = &dtfPitchOut;
 		break;
-
-		// default case
-	default:
-		break;
-	}
-}
-
-//-----------------------------------------------------------------------------
-// set the parameters events address
-void SetEventAddress (void* pModule, int n, TEVT* pEvent) 
-{
-	// make convenient pointer to the module
-	TWaxDecoder* pWaxDecoder = ((TWaxDecoder*)pModule);
-	
-	switch (n) 
-    {
-	
-    // audio input
-	case 0:
-		pWaxDecoder->m_audioInputTab[0] = pEvent;
-		break;
-
-    // audio input
-	case 1:
-		pWaxDecoder->m_audioInputTab[1] = pEvent;
-		break;
-
-    // timecode name listbox input
-	case 2:
-		pWaxDecoder->m_lbxTimecodes = pEvent;
-		break;
-
-    // rotational speed listbox input
-	case 3:
-		pWaxDecoder->m_lbxRpmSpeed = pEvent;
-		break;
-
-    // position data field output
-	case 4:
-		pWaxDecoder->m_dtfPositionOut = pEvent;
-		break;
-
-    // pitch data field output
-	case 5:
-		pWaxDecoder->m_dtfPitchOut = pEvent;
-		break;
-
 	// default case
 	default:
 		break;
 	}
 }
 
+
 //-----------------------------------------------------------------------------
-// Parameters callback
-void CallBack (void* pModule, TMessage* Message) 
+void WaxDecoder::onCallBack (UsineMessage *Message) 
 {
-	// make convenient pointer to the module
-	TWaxDecoder* pWaxDecoder = ((TWaxDecoder*)pModule);
-	
-	// param: timecode or rpm list box inputs
-	if ((Message->wParam==2) || (Message->wParam==3))
-        if(Message->lParam==MSG_CHANGE)
-        {
-            int TC_i = pWaxDecoder->GetEvtData(pWaxDecoder->m_lbxTimecodes);
-            int RPM_i = pWaxDecoder->GetEvtData(pWaxDecoder->m_lbxRpmSpeed);
-            
-            pWaxDecoder->LoadTimecoder(TC_NAMES[TC_i], RPM_SPEED[RPM_i]);
-        }
 }
 
 //-----------------------------------------------------------------------------
-// Main process
-void Process (void* pModule) 
+// populate properties tab with hardware settings (disc manufacturer, RPM speed and use of software phono preamp)
+void WaxDecoder::onCreateSettings()
 {
-	((TWaxDecoder*)pModule)->OutputTCoder();
-}
-
-//----------------------------------------------------------------------------
-// layout
-//----------------------------------------------------------------------------
-
-void CreateLayout(void* pModule){}
-void LayoutHasChanged(void* pModule){}
-void Resize (void* pModule, int W, int H) { }
-void Paint (void* pModule, HDC DC, DWORD ParentColor) {}
-
-//----------------------------------------------------------------------------
-// chunk system
-//----------------------------------------------------------------------------
-
-//-----------------------------------------------------------------------------
-// GetChunkLen : No chunk to store --> result := 0;
-int GetChunkLen (void* pModule) 
-{
-	return 0;
+	sdkAddSettingLineCaption(PROPERTIES_TAB_NAME, "hardware settings");
+	sdkAddSettingLineCombobox(PROPERTIES_TAB_NAME, &lbxTimecodes, "timecode", "\"serato_2a\",\"serato_2b\",\"serato_cd\",\"traktor_a\",\"traktor_b\",\"mixvibes_v2\",\"mixvibes_7inch\"");
+	sdkAddSettingLineCombobox(PROPERTIES_TAB_NAME, &lbxRpmSpeed, "rpm", "\"33\",\"45\"");
+	sdkAddSettingLineCombobox(PROPERTIES_TAB_NAME, &lbxSoftPA, "software phono preamp", "\"no\",\"yes\"");
 }
 
 //-----------------------------------------------------------------------------
-// GetChunk : No chunk to store --> nothing to do...
-void GetChunk (void* pModule, PCHAR chunk) {}
+void WaxDecoder::onSettingsHasChanged()
+{
+	loadTimecoder(TC_NAMES[lbxTimecodes], RPM_SPEED[lbxRpmSpeed], SOFT_PREAMP[lbxSoftPA]);
+} 
 
 //-----------------------------------------------------------------------------
-// SetChunk No chunk to restore --> nothing to do...
-void SetChunk (void* pModule, const PCHAR chunk) {}
+void WaxDecoder::onBlocSizeChange (int BlocSize)     
+/* nothing to do ? Usine asks to reboot after a block size change.
+ * update the module even if Usine is not restarted */
+{
+	usineBlockSize = BlocSize;
 
+	if (pcm != NULL)
+		delete[] pcm;
+
+	pcm = new signed short[usineBlockSize * 2];
+}
+
+//-----------------------------------------------------------------------------
+void WaxDecoder::onSampleRateChange (double SampleRate)
+{
+    loadTimecoder(TC_NAMES[lbxTimecodes], RPM_SPEED[lbxRpmSpeed], SOFT_PREAMP[lbxSoftPA]);
+}
+
+//-------------------------------------------------------------------------
+void WaxDecoder::onProcess () 
+{
+	outputTCoder();
+}
+
+
+//-------------------------------------------------------------------------
+// private methods implementation
+//-----------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+// init the timecoder (return -1 if fails, 0 otherwise)
+int WaxDecoder::loadTimecoder(AnsiCharPtr tc_def, double speed, bool soft_pa)
+{
+    TimecodeDefinition = timecoder_find_definition(tc_def);
+    
+    if (TimecodeDefinition == NULL)
+        return -1;
+    
+    usineSmplRate = sdkGetSampleRate();
+
+    timecoder_init(&TCoder, TimecodeDefinition, speed, usineSmplRate, soft_pa);
+    
+    return 0;
+}
+
+//-----------------------------------------------------------------------------
+// getting pitch and position from the decoder and writing to the module outputs
+int WaxDecoder::exportPlaybackParameters()
+{
+    /* FROM 'sync_to_timecode(struct player)' in player.c xwax sources */
+    /*******************************************************************/
+    double when, tcpos;
+    signed int timecode;
+
+    timecode = timecoder_get_position(&TCoder, &when);
+
+    /* Instruct the caller to disconnect the timecoder if the needle
+     * is outside the 'safe' zone of the record */
+
+    if (timecode != -1 && timecode > timecoder_get_safe(&TCoder))
+        return -1;
+
+    /* If the timecoder is alive, use the pitch from the sine wave */
+
+    pitch = timecoder_get_pitch(&TCoder);
+
+    /* If we can read an absolute time from the timecode, then use it */
+
+    if (timecode == -1)
+        target_position = TARGET_UNKNOWN;
+    else
+    {
+        tcpos = (double)timecode / timecoder_get_resolution(&TCoder);
+        target_position = tcpos + pitch * when;
+    }
+    /*******************************************************************/
+    
+    // set outputs
+    sdkSetEvtData(dtfPositionOut, target_position);
+    sdkSetEvtData(dtfPitchOut, pitch);
+    
+    return 0;
+}
+
+//-----------------------------------------------------------------------------
+// pcm conversion from Usine stereo audio inputs to xwax decoder
+void WaxDecoder::writeCompatibleAudio(signed short*& pcm)
+{
+    int i;
+    
+    for(i=0; i < usineBlockSize; ++i)
+    {         
+        pcm[2*i] = 32768 * sdkGetEvtArrayData(audioInputTab[0], i);
+        pcm[2*i+1] = 32768 * sdkGetEvtArrayData(audioInputTab[1], i);
+    }
+}
+
+//-----------------------------------------------------------------------------
+// main process
+void WaxDecoder::outputTCoder()
+{
+    // get 'xwax compatible' audio from inputs
+    writeCompatibleAudio(pcm);
+    
+    // submit block to timecoder
+    timecoder_submit(&TCoder, pcm, usineBlockSize);
+    
+    // decode and output playback infos
+    if (exportPlaybackParameters() == -1)
+    {
+        sdkSetEvtData(dtfPositionOut, TARGET_UNKNOWN);
+        sdkSetEvtData(dtfPitchOut, 0.);
+    }
+}

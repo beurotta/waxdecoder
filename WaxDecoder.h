@@ -1,21 +1,45 @@
 //-----------------------------------------------------------------------------
-//
 //@file  
 //	WaxDecoder.h
 //
-//@date 
-//	2012/06/xx
-//
 //@author
-//	naarud
+//	Arnaud BEUROTTE aka 'naarud'
 //
 //@brief 
-//	Implementation of the timecoder c code used in xwax (xwax.org), vinyl 
-//  emulation software for Linux designed by Mark Hills <mark@pogo.org.uk>
+//	Implementation of the timecoder c code used in xwax (xwax.org), DJ software
+//	with vinyl record emulation for Linux, designed by Mark Hills <mark@pogo.org.uk>
 //
 //@historic 
 //	2012/07/04
 //    first release, implement the timecoder used in v1.2 of xwax
+//  2018/11/16
+//    updated to Usine SDK HH3-7.01.006
+//    based on xwax v1.7 sources
+//
+//@IMPORTANT
+// All dependencies are under there own licence.
+//
+//@LICENCE
+//
+// Copyright (c) 2012, 2018 Arnaud BEUROTTE
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files(the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions :
+//
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
 //
 //-----------------------------------------------------------------------------
 
@@ -26,17 +50,16 @@
 //-----------------------------------------------------------------------------
 // includes
 //-----------------------------------------------------------------------------
-#include "UserDefinitions.h"
-#include "timecoder.h"
+#include "./sdk/UserDefinitions.h"  
+#include "./xwax_src/timecoder.h"
 
 //-----------------------------------------------------------------------------
 // defines and constantes
 //-----------------------------------------------------------------------------
-
 #define TARGET_UNKNOWN INFINITY
 
 // names of handled timecodes
-PCHAR const TC_NAMES[7] = {
+AnsiCharPtr const TC_NAMES[7] = {
     "serato_2a",
     "serato_2b",
     "serato_cd",
@@ -49,175 +72,97 @@ PCHAR const TC_NAMES[7] = {
 // turntable rotational speed : 1.0 for 33rpm, 1.35 for 45rpm
 double const RPM_SPEED[2] = {1., 1.35};
 
-//-----------------------------------------------------------------------------
-// structures and typedef
-//-----------------------------------------------------------------------------
-
-// structures and typedef goes here
+// 'software preamp' for unamplified phono signal connected to a line-level input
+bool const SOFT_PREAMP[2] = {FALSE, TRUE};
 
 //-----------------------------------------------------------------------------
 // class definition
 //-----------------------------------------------------------------------------
-class TWaxDecoder : public TUserModule
+class WaxDecoder : public UserModuleBase
 {
     //-------------------------------------------------------------------------
-    // public members
-    //-------------------------------------------------------------------------
+	// module constructors/destructors
+	//-------------------------------------------------------------------------
 public:
-
-    //-------------------------------------------------------------------------
-    // parameters events
-    TEVT* m_audioInputTab[2];       // stereo audio input
-    TEVT* m_lbxTimecodes;       // listbox of available timecodes
-    TEVT* m_lbxRpmSpeed;        // listbox of rotational speed
-    TEVT* m_dtfPositionOut;       // position output
-    TEVT* m_dtfPitchOut;       // pitch output
-
-    // public constructors/destructors
-    //-------------------------------------------------------------------------
-public:
-    // constructor
-    TWaxDecoder()
-    {
-        usineBlockSize = 0;
-        usineSmplRate = 0;
-        target_position = TARGET_UNKNOWN;
-        pitch = 0.;
-    };
-
+	// constructor
+    WaxDecoder();
+ 
     // destructor
-    ~TWaxDecoder()
-    {
-		if (pcm != NULL )
-			delete [] pcm;
-    };
+    virtual ~WaxDecoder();
 
-    //-------------------------------------------------------------------------
-    // protected members
-    //-------------------------------------------------------------------------
-protected:
-    // used to iterate into the audio buffer
-    int usineBlockSize;
 
-    // used to init the timecoder
-    unsigned int usineSmplRate;
+	//-------------------------------------------------------------------------
+	// public methods inherited from UserModule
+	//-------------------------------------------------------------------------
+public:
+	//-------------------------------------------------------------------------
+	// module info
+	void onGetModuleInfo (MasterInfo* pMasterInfo, ModuleInfo* pModuleInfo);
 
+	//-------------------------------------------------------------------------
+	// init
+	void onInitModule (MasterInfo* pMasterInfo, ModuleInfo* pModuleInfo);
+
+	//-------------------------------------------------------------------------
+	// parameters and process
+	void onGetParamInfo (int ParamIndex, TParamInfo* pParamInfo);
+	void onCallBack (UsineMessage *Message);
+ 	void onProcess ();
+
+	//-------------------------------------------------------------------------
+	// timecoder settings
+	void onCreateSettings();
+	void onSettingsHasChanged();
+
+ 	//-----------------------------------------------------------------------------
+	// audio setup update
+	void onBlocSizeChange (int BlocSize);
+	void onSampleRateChange (double SampleRate);
+   
+	//-------------------------------------------------------------------------
+	// private members
+	//-------------------------------------------------------------------------
+private:
+	//-------------------------------------------------------------------------
+	// parameters events
+    UsineEventPtr audioInputTab[2];   // stereo audio input
+    UsineEventPtr dtfPositionOut;     // position data output
+    UsineEventPtr dtfPitchOut;        // pitch data output
+
+	//-------------------------------------------------------------------------
+    // Usine and soundcard audio settings
+    int usineBlockSize;               // used to translate Usine audio blocks to xwax buffer
+    unsigned int usineSmplRate;       // used to init the timecoder
+
+	//-------------------------------------------------------------------------
     // timecode definition and timecoder
     timecode_def * TimecodeDefinition;
     timecoder TCoder;
     
+ 	//-------------------------------------------------------------------------
     // audio samples for timecoder lib
     signed short * pcm;
-        
-    // output var
-    double target_position; // seconds or TARGET_UNKNOWN
+
+	//-------------------------------------------------------------------------
+    // output
+    double target_position;           // seconds or TARGET_UNKNOWN
     double pitch;
+	
+	//-------------------------------------------------------------------------
+	// hardware settings
+	int lbxTimecodes;
+    int lbxRpmSpeed;
+	int lbxSoftPA;
+	
+	//-------------------------------------------------------------------------
+	// private methods
+	//-------------------------------------------------------------------------
+private :
+    int loadTimecoder(AnsiCharPtr tc_def, double speed, bool soft_pa);
+    int exportPlaybackParameters();
+    void writeCompatibleAudio(signed short*& pcm);
+    void outputTCoder();
 
-    //-------------------------------------------------------------------------
-    // PUBLIC METHODES
-    //-------------------------------------------------------------------------
-public:
+}; // class WaxDecoder
 
-    // init the timecoder (return -1 if fails, 0 otherwise)
-    int LoadTimecoder(PCHAR tc_def, double speed)
-    {
-        // load the definition associated to the provided name
-        TimecodeDefinition = timecoder_find_definition(tc_def);
-        
-        // terminate if the loading failed
-        if (TimecodeDefinition == NULL)
-            return -1;
-        
-        // get the current sample rate
-        usineSmplRate = m_masterInfo->pTimeInfo->sampleRate;
-        
-        timecoder_init(&TCoder, TimecodeDefinition, speed, usineSmplRate);
-        
-        return 0;
-    }
-
-
-    // main process
-    void OutputTCoder()
-    {
-        // usine block size
-        usineBlockSize = GetBlocSize();
-        
-        // get 'xwax compatible' audio from inputs
-        m_writeCompatibleAudio(pcm);
-        
-        // submit block to timecoder
-        timecoder_submit(&TCoder, pcm, usineBlockSize);
-        
-        // decode and output playback infos
-        if (m_exportPlaybackParameters() == -1)
-        {
-            SetEvtData(m_dtfPositionOut, TARGET_UNKNOWN);
-            SetEvtData(m_dtfPitchOut, 0.);
-        }
-        
-        delete [] pcm;
-    }
-
-
-
-    //-------------------------------------------------------------------------
-    // PROTECTED METHODES
-    //-------------------------------------------------------------------------
-protected:
-
-    // pcm conversion from Usine stereo audio inputs to xwax decoder
-    void m_writeCompatibleAudio(signed short*& pcm)
-    {
-        int i;
-
-        // declare an audio samples array of size 'usineBlockSize'
-        pcm = new signed short[usineBlockSize * 2];
-        
-        for(i=0; i < usineBlockSize; ++i)
-        {         
-            pcm[2*i] = 32768 * GetEvtArrayData(m_audioInputTab[0], i);
-            pcm[2*i+1] = 32768 * GetEvtArrayData(m_audioInputTab[1], i);
-        }
-    }
-    
-    int m_exportPlaybackParameters()
-    {
-        /* COPY-PASTE FROM 'sync_to_timecode(struct player)' in player.c */
-        /*****************************************************************/
-        double when, tcpos;
-        signed int timecode;
-
-        timecode = timecoder_get_position(&TCoder, &when);
-
-        /* Instruct the caller to disconnect the timecoder if the needle
-         * is outside the 'safe' zone of the record */
-
-        if (timecode != -1 && timecode > timecoder_get_safe(&TCoder))
-            return -1;
-
-        /* If the timecoder is alive, use the pitch from the sine wave */
-
-        pitch = timecoder_get_pitch(&TCoder);
-
-        /* If we can read an absolute time from the timecode, then use it */
-
-        if (timecode == -1)
-            target_position = TARGET_UNKNOWN;
-        else
-        {
-            tcpos = (double)timecode / timecoder_get_resolution(&TCoder);
-            target_position = tcpos + pitch * when;
-        }
-        /*****************************************************************/
-        
-        // set outputs
-        SetEvtData(m_dtfPositionOut, target_position);
-        SetEvtData(m_dtfPitchOut, pitch);
-        
-        return 0;
-    }
-
-}; // class TWaxDecoder
-
-#endif //INCLUDED_WAXDECODER_H
+#endif // INCLUDED_WAXDECODER_H

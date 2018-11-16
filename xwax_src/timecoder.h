@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Mark Hills <mark@pogo.org.uk>
+ * Copyright (C) 2018 Mark Hills <mark@xwax.org>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -29,14 +29,12 @@
 
 typedef unsigned int bits_t;
 
-extern double xtest; // DBG
-
-// MODS timecodes def: reorder ints to account for new def
+// MODS timecodes def: reorder ints to account for modified definitions in timecoder.cpp
 struct timecode_def {
     char *name, *desc;
-    // int bits, /* number of bits in string */
-        // resolution, /* wave cycles per second */
-        // flags;
+//    int bits, /* number of bits in string */
+//        resolution, /* wave cycles per second */
+//        flags;
     int resolution, /* wave cycles per second */
         flags,
 	    bits; /* number of bits in string */
@@ -62,6 +60,7 @@ struct timecoder {
     /* Precomputed values */
 
     double dt, zero_alpha;
+    signed int threshold;
 
     /* Pitch information */
 
@@ -87,7 +86,7 @@ struct timecode_def* timecoder_find_definition(const char *name);
 void timecoder_free_lookup(void);
 
 void timecoder_init(struct timecoder *tc, struct timecode_def *def,
-                    double speed, unsigned int sample_rate);
+                    double speed, unsigned int sample_rate, bool phono);
 void timecoder_clear(struct timecoder *tc);
 
 int timecoder_monitor_init(struct timecoder *tc, int size);
